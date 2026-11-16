@@ -1,0 +1,4 @@
+/index.html
+  Cache-Control: public, max-age=300
+/icons/*
+  Cache-Control: public, max-age=604800
