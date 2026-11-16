@@ -49,6 +49,11 @@
   #cine .bar { position:absolute; left:0; right:0; height:11%; background:#000; } #cine .t { top:0; } #cine .b { bottom:0; }
   #cineCap { position:absolute; left:0; right:0; bottom:13%; text-align:center; color:#f5d77a; font:700 18px Georgia, serif; letter-spacing:.12em; text-transform:uppercase; text-shadow:0 2px 6px #000c; }
   #cineSkip { position:absolute; right:calc(14px + var(--sr)); top:calc(11% + 10px); pointer-events:auto; border:1px solid #fff8; background:#0007; color:#fff; font-weight:700; font-size:12px; letter-spacing:.1em; padding:7px 14px; border-radius:16px; }
+  #keys { position:fixed; left:14px; bottom:14px; z-index:9; background:#0b0d12d9; color:#eee; font:12px/1.5 system-ui, sans-serif; padding:10px 12px; border-radius:10px; border:1px solid #f5d77a55; display:none; pointer-events:none; max-width:300px; }
+  #keys.show { display:block; } #keys b { color:#f5d77a; letter-spacing:.08em; text-transform:uppercase; font-size:11px; } #keys p { margin:3px 0; }
+  kbd { display:inline-block; min-width:14px; padding:0 5px; margin:0 2px; border:1px solid #fff5; border-bottom-width:2px; border-radius:4px; background:#ffffff14; font:600 11px/17px system-ui, sans-serif; text-align:center; color:#fff; }
+  #btns kbd { position:absolute; top:3px; right:4px; margin:0; padding:0 3px; min-width:0; font-size:9px; line-height:13px; color:#111a; border-color:#0003; background:#0000000d; }
+  #keyhelp { position:fixed; left:14px; bottom:14px; z-index:9; pointer-events:none; color:#fffc; font:12px system-ui, sans-serif; text-shadow:0 1px 3px #000; } #keys.show ~ #keyhelp, html.cine #keyhelp, html.cine #keys { display:none !important; }
   #fade { position:fixed; inset:0; background:#000; opacity:0; transition:opacity .3s; pointer-events:none; z-index:14; }
   #cross { position:fixed; left:50%; top:50%; width:22px; height:22px; margin:-11px; border:2px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #0006; display:none; pointer-events:none; }
   #cross::after { content:''; position:absolute; left:50%; top:50%; width:4px; height:4px; margin:-2px; background:#fff; border-radius:50%; }
@@ -133,6 +138,12 @@ html.fake #auc { justify-content:flex-end; align-items:center; }html.fake #auc .
 <div id="obj"><div id="arrow"><i></i></div><span id="objtxt">…</span></div>
 <div id="cross"></div>
 <div id="fade"></div>
+<div id="keys"><b>Controls</b>
+  <p><kbd>W A S D</kbd> move / drive <kbd>Shift</kbd> walk</p><p><kbd>Mouse drag</kbd> look <kbd>Wheel</kbd> zoom</p>
+  <p><kbd>F</kbd> get in / out, use <kbd>Space</kbd> jump</p><p><kbd>G</kbd> gun <kbd>Click</kbd> fire</p>
+  <p><kbd>Q</kbd> wave <kbd>B</kbd> dance <kbd>V</kbd> call car</p><p><kbd>H</kbd> horn (in car)</p>
+  <p>Helicopter: <kbd>Space</kbd> up <kbd>C</kbd> down</p><p>Jet: <kbd>Shift</kbd>/<kbd>Ctrl</kbd> throttle, <kbd>W S</kbd> pitch</p>
+  <p>Auction: <kbd>1</kbd> +10% <kbd>2</kbd> double <kbd>3</kbd> walk away</p><p><kbd>Esc</kbd> skip flight <kbd>K</kbd> hide this</p></div>
 <div id="cine"><i class="bar t"></i><i class="bar b"></i><div id="cineCap"></div><button id="cineSkip">Skip</button></div>
 <div id="auc"><div class="card">
   <div class="lbl">Live auction</div><h3 id="aucName"></h3>
@@ -1080,7 +1091,11 @@ loader.parse(buf, '', (gltf) => {
   $('#play').disabled = false; $('#play').textContent = 'Play';
   window.__ready = true;
 }, (err) => { $('#play').textContent = 'Load failed'; });
-$('#play').addEventListener('click', () => { audioInit(); camReset = true; started = true; if (MOBILE) goLandscape(); else orientCheck(); $('#start').style.opacity = 0; setTimeout(() => $('#start').remove(), 500); });
+if (!MOBILE) { const tag = { act: 'F', valet: 'V', Jump: 'Space', Wave: 'Q', Dance: 'B', gun: 'G', fire: 'Click', horn: 'H' };
+  for (const b of document.querySelectorAll('#btns button')) { const k = tag[b.dataset.a || b.id]; if (k) { b.style.position = 'relative'; b.insertAdjacentHTML('beforeend', '<kbd>' + k + '</kbd>'); } }
+  $('#bid1').insertAdjacentHTML('beforeend', ' <kbd>1</kbd>'); $('#bid2').insertAdjacentHTML('beforeend', ' <kbd>2</kbd>'); $('#aucQuit').insertAdjacentHTML('beforeend', ' <kbd>3</kbd>');
+  document.body.insertAdjacentHTML('beforeend', '<div id="keyhelp"><kbd>K</kbd> controls</div>'); }
+$('#play').addEventListener('click', () => { if (!MOBILE) { $('#keys').classList.add('show'); setTimeout(() => $('#keys').classList.remove('show'), 9000); } audioInit(); camReset = true; started = true; if (MOBILE) goLandscape(); else orientCheck(); $('#start').style.opacity = 0; setTimeout(() => $('#start').remove(), 500); });
 
 // ---- gun ----
 function setArmed(on) { if (!player) return; armed = on; PISTOL.visible = on; $('#cross').style.display = on ? 'block' : 'none'; $('#fire').style.visibility = on ? 'visible' : 'hidden'; document.querySelector('[data-a=gun]').classList.toggle('on', on);
@@ -1105,7 +1120,20 @@ function spawnGoons(n) {
 
 // ================= input =================
 const keys = {};
-addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Space' && mode !== 'drive') doAction('Jump'); if (e.code === 'KeyE') $('#act').click(); if (e.code === 'KeyG') doAction('gun'); if (e.code === 'KeyF') doAction('fire'); });
+// ---- PC keyboard: F/E use, G gun, left click fire, Q wave, B dance, V call car, H horn, 1/2/3 auction, Esc skip, K help ----
+const KEYMAP = { KeyQ: 'Wave', KeyB: 'Dance', KeyV: 'valet' };
+addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return; keys[e.code] = true; if (/^(Space|Tab|ArrowUp|ArrowDown|ArrowLeft|ArrowRight)$/.test(e.code)) e.preventDefault(); if (e.repeat) return;
+  if (e.code === 'KeyK' || e.code === 'Slash') { $('#keys').classList.toggle('show'); return; }
+  if (cut) { if (e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space') $('#cineSkip').click(); return; }
+  if (auc.on) { if (e.code === 'Digit1') myBid(1.1); else if (e.code === 'Digit2') myBid(2); else if (e.code === 'Digit3' || e.code === 'Escape') $('#aucQuit').click(); return; }
+  if (e.code === 'KeyF' || e.code === 'KeyE' || e.code === 'Enter') { if ($('#act').classList.contains('show')) $('#act').click(); return; }
+  if (e.code === 'Space' && mode !== 'drive') doAction('Jump');
+  if (e.code === 'KeyG') doAction('gun');
+  if (e.code === 'KeyH' && mode === 'drive') $('#horn').click();
+  if (KEYMAP[e.code] && mode !== 'drive') doAction(KEYMAP[e.code]); });
+// left click (not a camera drag) fires while the gun is out
+{ let d = null; renderer.domElement.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button === 0) d = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+  renderer.domElement.addEventListener('pointerup', (e) => { if (!d || e.pointerType !== 'mouse') return; const moved = Math.hypot(e.clientX - d.x, e.clientY - d.y), quick = performance.now() - d.t < 350; d = null; if (moved < 6 && quick && armed && mode !== 'drive' && !auc.on) doAction('fire'); }); }
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 const joy = { x: 0, y: 0, active: false };
 { const el = $('#joy'), zone = $('#joyzone'), knob = el.querySelector('i'); let id = null, cx = 0, cy = 0;
