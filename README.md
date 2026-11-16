@@ -1,5 +1,7 @@
 # Sherubhai – King of the City
 
+**Play:** https://sheru-city.littlegarage.workers.dev/
+
 Open-world 3D browser game built with three.js. Everything (game, character model, music) is in a single `index.html`.
 
 ## Hosting on Cloudflare
