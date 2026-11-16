@@ -2,12 +2,13 @@
 
 Open-world 3D browser game built with three.js. Everything (game, character model, music) is in a single `index.html`.
 
-## Hosting on Cloudflare Pages
+## Hosting on Cloudflare
 
-1. Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Pick this repository.
-3. Build settings: Framework preset **None**, build command **empty**, build output directory **`/`**.
-4. **Save and Deploy**. The game is live at `https://<project>.pages.dev`.
+The site lives in `public/`; `wrangler.jsonc` tells Cloudflare to serve it as static assets.
+
+**Workers (Connect to Git):** pick this repo, leave the build command empty, keep the deploy command `npx wrangler deploy`, and press **Deploy**. Live at `https://sheru-city.<your-subdomain>.workers.dev`.
+
+**Pages (alternative):** Framework preset **None**, build command empty, build output directory **`public`**.
 
 Every push to `main` redeploys automatically.
 
