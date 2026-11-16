@@ -970,8 +970,8 @@ function arrive(toIsl) { { inside = null; const j = JETS[0]; if (toIsl) { j.car.
 // ---- flight cutscene: take-off, cruise over the sea, landing ----
 let cut = null;
 const ROUTE = {
-  isl: [[-140, 0, 176], [-60, 0, 176], [20, 0.5, 176], [90, 14, 176], [170, 46, 168], [300, 115, 138], [470, 132, 88], [600, 82, 42], [680, 26, 30], [736, 1.5, 30], [770, 0, 30], [800, 0, 30]],
-  city: [[915, 0, 30], [860, 0, 30], [800, 0.5, 30], [740, 14, 30], [660, 48, 40], [520, 132, 100], [360, 125, 160], [240, 62, 176], [180, 22, 176], [140, 3, 176], [100, 0, 176], [50, 0, 176], [20, 0, 176]] };
+  isl: [[-140, 0, 176], [-60, 0, 176], [30, 0, 176], [100, 5, 176], [190, 32, 172], [320, 104, 140], [470, 132, 90], [560, 100, 52], [630, 66, 34], [690, 36, 30], [735, 14, 30], [770, 3.2, 30], [800, 0.3, 30], [845, 0, 30], [895, 0, 30]],
+  city: [[915, 0, 30], [860, 0, 30], [800, 0.4, 30], [740, 12, 30], [660, 46, 40], [520, 132, 100], [400, 110, 150], [300, 72, 172], [230, 38, 176], [180, 16, 176], [145, 4, 176], [118, 0.3, 176], [80, 0, 176], [20, 0, 176]] };
 function travel(toIsl) { if (trans || cut || busy) return; if (armed) setArmed(false); fadeTo(() => startCut(toIsl)); }
 function startCut(toIsl) {
   const j = JETS[0], pts = ROUTE[toIsl ? 'isl' : 'city'].map(([x, y, z]) => new THREE.Vector3(x, y, z));
@@ -982,9 +982,10 @@ function startCut(toIsl) {
 function cutTick(dt) {
   const C = cut, j = C.j; C.t += dt; const u = Math.min(1, C.t / C.dur), sArc = u * u * (3 - 2 * u);
   const p = C.curve.getPointAt(sArc), tg = C.curve.getTangentAt(sArc); p.y = Math.max(0, p.y);
-  const head = Math.atan2(tg.x, tg.z); let pitch = Math.atan2(tg.y, Math.hypot(tg.x, tg.z)); if (p.y < 0.3) pitch = Math.max(0, pitch) * 0.5;
+  const head = Math.atan2(tg.x, tg.z), raw = Math.atan2(tg.y, Math.hypot(tg.x, tg.z)), air = Math.min(1, Math.max(0, p.y / 7)), gnd = air * air * (3 - 2 * air);
+  if (C.pi === undefined) C.pi = 0; C.pi += (clamp(raw, -0.17, 0.4) * gnd - C.pi) * Math.min(1, dt * 3.5); const pitch = C.pi;
   if (C.ph !== null) { let dh = head - C.ph; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); C.roll += (clamp(-dh / Math.max(dt, 1e-3) * 1.6, -0.55, 0.55) - C.roll) * Math.min(1, dt * 2); } C.ph = head;
-  j.car.position.copy(p); j.car.rotation.set(-pitch, head, p.y > 2 ? C.roll : 0); j.alt = p.y; j.gear.visible = p.y < 9; j.heading = head;
+  j.car.position.copy(p); j.car.rotation.set(-pitch, head, C.roll * gnd); j.alt = p.y; j.gear.visible = p.y < 9; j.heading = head;
   const fw = new THREE.Vector3(Math.sin(head), 0, Math.cos(head)), rt = new THREE.Vector3(Math.cos(head), 0, -Math.sin(head)), at = p.clone().add(new THREE.Vector3(0, 2.5, 0));
   let cam, look = at, cap;
   if (u < 0.22) { cam = C.toIsl ? new THREE.Vector3(-25, 2.2, 190) : new THREE.Vector3(838, 2.2, 14); cap = C.toIsl ? 'Departing Sher Air' : 'Departing Sher Island'; }
