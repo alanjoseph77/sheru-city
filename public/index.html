@@ -84,6 +84,7 @@
   #btns { right:calc(10px + var(--sr)); bottom:calc(14px + var(--sb)); }
   #joyzone { position:fixed; left:0; bottom:0; width:42vw; height:46vh; z-index:2; touch-action:none; }
   #hud, #map, #obj, #speed, #hint, #toast { pointer-events:none; }
+  #map { transition: width .25s, height .25s; } #map.task { width:156px; height:156px; border-color:#ffd23f; } @media (max-width:520px) { #map.task { width:108px; height:108px; } }
   #joy { left:calc(18px + var(--sl)); bottom:calc(18px + var(--sb)); pointer-events:none; transition:opacity .2s; opacity:.75; }
   #joy.on { opacity:1; transition:none; }
   #btns { z-index:3; }
@@ -1276,6 +1277,7 @@ function drawMap() {
   for (const bx of blockC) for (const bz of blockC) { mapC.fillStyle = bx === 0 && bz === 0 ? '#c9b36a' : '#9c978c'; mapC.fillRect(mp(bx - 22), mp(bz - 22), 44 * ms, 44 * ms); }
   mapC.fillStyle = '#6f6a62'; for (const l of lots) mapC.fillRect(mp(l.cx - l.w / 2), mp(l.cz - l.d / 2), l.w * ms, l.d * ms);
   for (const p of PROPS) { mapC.fillStyle = p.owned ? '#35c46f' : '#f5d77a'; mapC.beginPath(); mapC.arc(mp(p.door.x), mp(p.door.z), 5, 0, 7); mapC.fill(); }
+  if (skRoute.length > 1) { mapC.save(); mapC.lineJoin = 'round'; mapC.lineCap = 'round'; mapC.strokeStyle = '#000b'; mapC.lineWidth = 7; mapC.beginPath(); skRoute.forEach(([x, z], i) => i ? mapC.lineTo(mp(x), mp(z)) : mapC.moveTo(mp(x), mp(z))); mapC.stroke(); mapC.strokeStyle = '#ffd23f'; mapC.lineWidth = 4; mapC.setLineDash([9, 6]); mapC.lineDashOffset = -performance.now() / 60; mapC.stroke(); const e = skRoute[skRoute.length - 1]; mapC.setLineDash([]); mapC.strokeStyle = '#ffd23f'; mapC.lineWidth = 3; mapC.beginPath(); mapC.arc(mp(e[0]), mp(e[1]), 8 + 3 * Math.sin(performance.now() / 200), 0, 7); mapC.stroke(); mapC.restore(); }
   for (const o of skTaskObjs) if (o.m.visible) { mapC.fillStyle = o.spin ? '#35c46f' : '#ff9f0a'; mapC.beginPath(); mapC.arc(mp(o.x), mp(o.z), 4.5, 0, 7); mapC.fill(); }
   for (const g of goons) if (!g.down) { mapC.fillStyle = '#ff3b30'; mapC.fillRect(mp(g.obj.position.x) - 3, mp(g.obj.position.z) - 3, 6, 6); }
   mapC.fillStyle = '#fff'; mapC.fillRect(mp(HERO.car.position.x) - 4, mp(HERO.car.position.z) - 4, 8, 8); mapC.fillStyle = '#39c6ff'; mapC.beginPath(); mapC.arc(mp(HELI.car.position.x), mp(HELI.car.position.z), 5, 0, 7); mapC.fill();
@@ -1467,7 +1469,7 @@ const SKPTS = [[-87, -60], [29, -87], [87, 40], [-29, 87], [60, 29], [-60, -29],
 let skTaskObjs = [];
 const skCur = () => S.skTask || null;
 function skClearObjs() { for (const o of skTaskObjs) scene.remove(o.m); skTaskObjs = []; }
-function skStartTask(i) { const T = SKT[i]; S.skTask = { i, prog: 0, base: T.id === 'goons' ? S.goons : T.id === 'auction' ? S.owned.length : 0, t: 0, run: false }; save(); skSpawnObjs(); toast('New task: ' + T.title); blip(520, 780); }
+function skStartTask(i) { const T = SKT[i]; S.skTask = { i, prog: 0, base: T.id === 'goons' ? S.goons : T.id === 'auction' ? S.owned.length : 0, t: 0, run: false }; save(); skSpawnObjs(); toast('New task: ' + T.title); blip(520, 780); setTimeout(() => hint('Follow the gold route on your map'), 2400); }
 function skSpawnObjs() { skClearObjs(); const c = skCur(); if (!c) return; const T = SKT[c.i];
   if (T.id === 'bags') { const pts = SKPTS.slice(0, 5); pts.forEach(([x, z], k) => { if (k < c.prog) return; const g = new THREE.Group(), bag = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.45), new THREE.MeshStandardMaterial({ color: 0x2f6b3a, roughness: 0.6 })), band = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.12, 0.47), trimGold); bag.position.y = band.position.y = 1.0; g.add(bag, band, marker(0x35c46f)); g.position.set(x, 0, z); scene.add(g); skTaskObjs.push({ m: g, x, z, k, spin: bag, band }); }); }
   if (T.id === 'race') { const pts = [[29, 60], [87, 29], [60, -87], [-29, -60], [-87, -29], [-29, 87]]; pts.forEach(([x, z], k) => { if (k < c.prog) return; const m = marker(0xff9f0a); m.scale.setScalar(2.4); m.position.set(x, 0, z); m.visible = k === c.prog; scene.add(m); skTaskObjs.push({ m, x, z, k }); }); }
@@ -1480,9 +1482,33 @@ function skTaskTick(dt) {
   else if (T.id === 'race') { const nx = skTaskObjs.find((o) => o.k === c.prog); if (c.run) { c.t += dt; if (c.t > 120) { c.run = false; c.prog = 0; c.t = 0; save(); skSpawnObjs(); hint('Too slow! Start again at checkpoint 1'); blip(300, 200); return { txt: 'Sreeku task: checkpoint run (restart)', tgt: null }; } }
     if (nx && !inside && Math.hypot(P.x - nx.x, P.z - nx.z) < 4) { if (mode !== 'drive') { if (frame % 60 === 0) hint('Drive a car through the checkpoints'); } else { scene.remove(nx.m); skTaskObjs = skTaskObjs.filter((o) => o !== nx); c.prog++; if (!c.run) { c.run = true; c.t = 0; } blip(700, 1050); const nn = skTaskObjs.find((o) => o.k === c.prog); if (nn) nn.m.visible = true; if (c.prog >= 6) { skTaskDone(); return null; } } }
     tgt = skTaskObjs.find((o) => o.k === c.prog); txt = `Sreeku task: checkpoint ${c.prog + 1} / 6` + (c.run ? ` · ${Math.max(0, 120 - c.t).toFixed(0)} s left` : ' · get in a car'); }
-  else if (T.id === 'goons') { const k = S.goons - c.base; c.prog = k; if (k >= 5) { skTaskDone(); return null; } if (!inside && Math.hypot(P.x, P.z) < 300 && !goons.some((g) => !g.down)) { if (!c.wait) c.wait = 2.5; c.wait -= dt; if (c.wait < 0) { c.wait = 0; spawnGoons(Math.min(3, 5 - k)); hint('Rival goons! Draw your gun (G)'); } } txt = `Sreeku task: goons down ${k} / 5`; }
-  else if (T.id === 'auction') { if (S.owned.length > c.base) { skTaskDone(); return null; } if (S.owned.length >= PROPS.length) { skTaskDone(); return null; } txt = 'Sreeku task: win an auction'; }
+  else if (T.id === 'goons') { const k = S.goons - c.base; c.prog = k; if (k >= 5) { skTaskDone(); return null; } if (!inside && Math.hypot(P.x, P.z) < 300 && !goons.some((g) => !g.down)) { if (!c.wait) c.wait = 2.5; c.wait -= dt; if (c.wait < 0) { c.wait = 0; spawnGoons(Math.min(3, 5 - k)); hint('Rival goons! Draw your gun (G)'); } } txt = `Sreeku task: goons down ${k} / 5`; let gb = 1e9; for (const g of goons) if (!g.down) { const d = Math.hypot(P.x - g.obj.position.x, P.z - g.obj.position.z); if (d < gb) { gb = d; tgt = { x: g.obj.position.x, z: g.obj.position.z }; } } if (!tgt) { let ab = 1e9; for (const p of PROPS) if (!p.owned) { const d = Math.hypot(P.x - p.door.x, P.z - p.door.z); if (d < ab) { ab = d; tgt = p.door; } } } }
+  else if (T.id === 'auction') { if (S.owned.length > c.base) { skTaskDone(); return null; } if (S.owned.length >= PROPS.length) { skTaskDone(); return null; } txt = 'Sreeku task: win an auction'; let ab = 1e9; for (const p of PROPS) if (!p.owned) { const d = Math.hypot(P.x - p.door.x, P.z - p.door.z); if (d < ab) { ab = d; tgt = p.door; } } if (tgt) txt += ` · ${Math.round(ab)} m`; }
+  if (inside === 'den' || Math.hypot(P.x - ISL2.x, P.z - ISL2.z) < 300) { txt = `Sreeku task: ${T.title} · fly to the city (Sreeku Air)`; tgt = null; }
   return { txt, tgt };
+}
+// ---- the route to the task target: follows the city streets, drawn on the map and as gold dots on the road ----
+let skRoute = [];
+const skDots = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.36, 0.36, 0.06, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f }), 170); skDots.frustumCulled = false; skDots.visible = false; scene.add(skDots);
+function skMakeRoute(a, b) {
+  const R = roadC, E = 94, snap = (p) => { let best = null; for (const r of R) { const c1 = { x: r, z: clamp(p.z, -E, E), ax: 'x', r }, c2 = { x: clamp(p.x, -E, E), z: r, ax: 'z', r }; for (const c of [c1, c2]) { const d = Math.hypot(p.x - c.x, p.z - c.z); if (!best || d < best.d) best = { ...c, d }; } } return best; };
+  const A = snap(a), B = snap(b), nodes = []; for (const x of R) for (const z of R) nodes.push({ x, z }); const ia = nodes.push({ x: A.x, z: A.z }) - 1, ib = nodes.push({ x: B.x, z: B.z }) - 1;
+  const adj = nodes.map(() => []), link = (i, j) => { const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].z - nodes[j].z); adj[i].push([j, d]); adj[j].push([i, d]); };
+  for (const ax of ['x', 'z']) for (const r of R) { const on = []; nodes.forEach((n, i) => { if (Math.abs(n[ax] - r) < 0.01) on.push(i); }); const o = ax === 'x' ? 'z' : 'x'; on.sort((p, q) => nodes[p][o] - nodes[q][o]); for (let k = 1; k < on.length; k++) if (on[k] !== on[k - 1]) link(on[k - 1], on[k]); }
+  const dist = nodes.map(() => 1e9), prev = nodes.map(() => -1), done = nodes.map(() => false); dist[ia] = 0;
+  for (let it = 0; it < nodes.length; it++) { let u = -1; for (let i = 0; i < nodes.length; i++) if (!done[i] && (u < 0 || dist[i] < dist[u])) u = i; if (u < 0 || dist[u] >= 1e9) break; done[u] = true; for (const [v, w] of adj[u]) if (dist[u] + w < dist[v]) { dist[v] = dist[u] + w; prev[v] = u; } }
+  const path = []; for (let i = ib; i >= 0; i = prev[i]) path.push([nodes[i].x, nodes[i].z]); path.reverse(); return [[a.x, a.z], ...path, [b.x, b.z]];
+}
+function skRouteUpdate(P, tgt) {
+  const city = !inside && Math.hypot(P.x - ISL2.x, P.z - ISL2.z) > 300 && Math.abs(P.x) < 260 && Math.abs(P.z) < 260;
+  skRoute = tgt && city ? skMakeRoute(P, tgt) : []; $('#map').classList.toggle('task', skRoute.length > 0);
+}
+const skDum = new THREE.Object3D();
+function skRouteTick(t) {
+  const r = skRoute; if (r.length < 2) { skDots.visible = false; return; }
+  let n = 0, acc = 0, next = (t * 4) % 3.2; skDots.visible = true;
+  for (let i = 1; i < r.length && n < 170; i++) { const [x0, z0] = r[i - 1], [x1, z1] = r[i], L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.01) continue; while (next < acc + L && n < 170) { const k = (next - acc) / L; skDum.position.set(x0 + (x1 - x0) * k, 0.32, z0 + (z1 - z0) * k); skDum.scale.setScalar(0.8 + 0.25 * Math.sin(t * 6 - n * 0.5)); skDum.updateMatrix(); skDots.setMatrixAt(n++, skDum.matrix); next += 3.2; } acc += L; }
+  skDum.scale.setScalar(0); skDum.updateMatrix(); for (let i = n; i < 170; i++) skDots.setMatrixAt(i, skDum.matrix); skDots.instanceMatrix.needsUpdate = true;
 }
 // ---- the conversation panel ----
 function skTalk() {
@@ -1604,7 +1630,7 @@ function tick() {
 
     // ---- game logic ----
     const P = playerPos(); aucTick(dt); guardTick(dt); convoyTick(dt);
-    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt);
+    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt); if (frame % 15 === 0) skRouteUpdate(P, skT && skT.tgt); skRouteTick(performance.now() / 1000);
     if (inside === 'house' && !busy && player.position.z < HOUSE.z - 7.0 && Math.abs(player.position.x - HOUSE.x) < 2) teleport('up', UP.x + 5, 0, UP.z + 3.4, Math.PI);
     for (let i = goons.length - 1; i >= 0; i--) { const g = goons[i]; if (inside) continue; g.mx.update(dt);
       if (g.down) { g.down += dt; const k = Math.min(1, g.down * 3.5); g.obj.rotation.x = -k * 1.5; g.obj.position.y = g.gy + k * 0.12; if (g.down > 4) { scene.remove(g.obj); goons.splice(i, 1); } continue; }
@@ -1658,7 +1684,7 @@ $('#rotKeep').addEventListener('click', () => { keepUpright = true; fitScreen();
 // sideways mode: turn screen touches into game coordinates for the camera drag and pinch
 for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) renderer.domElement.addEventListener(t, (e) => { if (!isFake() || !e.isTrusted) return; e.stopImmediatePropagation(); e.preventDefault(); const g = toGame(e.clientX, e.clientY);
   e.target.dispatchEvent(new PointerEvent(e.type, { pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary, button: e.button, buttons: e.buttons, clientX: g.x, clientY: g.y, screenX: g.x, screenY: g.y, pressure: e.pressure, width: e.width, height: e.height, bubbles: true, cancelable: true, composed: true })); }, true);
-window.__g = { sun, scene, renderer, S, auc, doAction, enterCar, exitCar, openAuction, myBid, spawnGoons, fire, goons, PROPS, camera, controls, HERO, HELI, JETS, convoy, guards, npcs, vehicles, pedal, get trans() { return trans; }, get cut() { return cut; }, get song() { return [!!songBuf, songBuf ? songBuf.duration : 0, !!songSrc]; }, endAuction, get inside() { return inside; }, teleport, SPOTS, nextOutfit, sleepAt, wakeAt, UP, LOBBY, SUITE, goHouse, travel, HOUSE, HALL, ISL, get player() { return player; }, SK, skTalk, skArrive, ISL2, DEN, get skTask() { return S.skTask; }, skStartTask, get veh() { return veh; }, hud };
+window.__g = { sun, scene, renderer, S, auc, doAction, enterCar, exitCar, openAuction, myBid, spawnGoons, fire, goons, PROPS, camera, controls, HERO, HELI, JETS, convoy, guards, npcs, vehicles, pedal, get trans() { return trans; }, get cut() { return cut; }, get song() { return [!!songBuf, songBuf ? songBuf.duration : 0, !!songSrc]; }, endAuction, get inside() { return inside; }, teleport, SPOTS, nextOutfit, sleepAt, wakeAt, UP, LOBBY, SUITE, goHouse, travel, HOUSE, HALL, ISL, get player() { return player; }, SK, skTalk, skArrive, ISL2, DEN, get skTask() { return S.skTask; }, get skRoute() { return skRoute; }, skStartTask, get veh() { return veh; }, hud };
 </script>
 </body>
 </html>
