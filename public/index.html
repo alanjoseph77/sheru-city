@@ -49,6 +49,7 @@
   #brake, #down { background:linear-gradient(#d4524a,#a8322b) !important; }
   #fire { background:linear-gradient(#d4524a,#a8322b) !important; color:#fff !important; visibility:hidden; }
   #btns button.on { background:var(--gold) !important; }
+  #skdark { position:fixed; inset:0; z-index:12; pointer-events:none; opacity:0; background:radial-gradient(ellipse 58% 62% at 50% 52%, rgba(0,0,0,.08) 0%, rgba(0,0,0,.78) 55%, rgba(0,0,0,.97) 100%); }
   #cine { position:fixed; inset:0; z-index:13; pointer-events:none; display:none; }
   html.cine #cine { display:block; } html.cine #hud, html.cine #map, html.cine #obj, html.cine #joy, html.cine #joyzone, html.cine #btns, html.cine #speed, html.cine #hint, html.cine #cross, html.cine #reset { display:none !important; }
   #cine .bar { position:absolute; left:0; right:0; height:11%; background:#000; } #cine .t { top:0; } #cine .b { bottom:0; }
@@ -150,7 +151,7 @@ html.fake #auc { justify-content:flex-end; align-items:center; }html.fake #auc .
   <p><kbd>Q</kbd> wave <kbd>B</kbd> dance <kbd>V</kbd> call car</p><p><kbd>H</kbd> horn (in car)</p>
   <p>Helicopter: <kbd>Space</kbd> up <kbd>C</kbd> down</p><p>Jet: <kbd>Shift</kbd>/<kbd>Ctrl</kbd> throttle, <kbd>W S</kbd> pitch</p>
   <p>Auction: <kbd>1</kbd> +10% <kbd>2</kbd> double <kbd>3</kbd> walk away</p><p><kbd>Esc</kbd> skip flight <kbd>K</kbd> hide this</p></div>
-<div id="cine"><i class="bar t"></i><i class="bar b"></i><div id="cineCap"></div><button id="cineSkip">Skip</button></div>
+<div id="skdark"></div><div id="cine"><i class="bar t"></i><i class="bar b"></i><div id="cineCap"></div><button id="cineSkip">Skip</button></div>
 <div id="auc"><div class="card">
   <div class="lbl">Live auction</div><h3 id="aucName"></h3>
   <div id="aucBid">₹0</div><div id="aucWho"></div>
@@ -1373,7 +1374,7 @@ const SK = { obj: null, B: {}, REST: {}, RD: {}, hip0: null, act: 'Villain', t: 
       P.legL = { fwd: 24 * s, out: 5, knee: kL, toe: 12, foot: -0.35 * kL }; P.legR = { fwd: -24 * s, out: 5, knee: kR, toe: 12, foot: -0.35 * kR }; P.hipYaw = 6 * s; P.chestYaw = -10 * s; P.chestRoll = 2.5 * s; P.headYaw = 4 * s; P.headPitch = -6; P.lean = 2;
       P.L = hang(1, { fwd: 6 - 20 * s, out: 15, ffwd: 28 - 14 * s, fout: 10, shrug: 3 * cl(-s) }); P.R = hang(-1, { fwd: 6 + 20 * s, out: 15, ffwd: 28 + 14 * s, fout: 10, shrug: 3 * cl(s) }); P.hip = [0, -0.02 - 0.022 * Math.abs(c), 0]; return P; },
     Villain: (t) => { const w = t / 5 * PI2, P = base(), br = 0.01 * sin(w * 2); P.chestOut = -9; P.headPitch = -9 + 1.5 * sin(w * 2); P.headYaw = 6 * sin(w); P.legL = { fwd: 0, out: 10, knee: 2, toe: 18, foot: 0 }; P.legR = { fwd: 0, out: 10, knee: 2, toe: 18, foot: 0 };
-      P.L = { u: V(0.33, -0.86, 0.38), f: V(-0.97, 0.16 + br, 0.13), palm: V(0, -0.2, -1), curl: 55, thumb: 30, shrug: 2 }; P.R = { u: V(-0.35, -0.82, 0.42), f: V(0.96, 0.27 + br, 0.16), palm: V(0, -1, -0.3), curl: 40, thumb: 20, shrug: 2 }; return P; },
+      P.L = { u: V(0.30, -0.70, 0.66), f: V(-0.86, 0.10 + br, 0.50), palm: V(0, -0.2, -1), curl: 55, thumb: 30, shrug: 2 }; P.R = { u: V(-0.32, -0.64, 0.70), f: V(0.84, 0.20 + br, 0.62), palm: V(0, -1, -0.3), curl: 40, thumb: 20, shrug: 2 }; return P; },
     Talk: (t) => { const w = t / 3 * PI2, P = base(), g = sin(w * 2); P.headPitch = -6 + 4 * sin(w * 2 + 1); P.headYaw = 5 * sin(w); P.chestYaw = -6; P.R = { u: V(-0.4, -0.72 + 0.06 * g, 0.5), f: V(-0.15 + 0.1 * g, 0.15 + 0.15 * g, 1), palm: V(0.2, 1, 0.3), curl: 18, thumb: 10, shrug: 2 }; return P; },
     Point: (t) => { const P = base(), k = sm(t / 0.4); P.chestYaw = -8 * k; P.headPitch = -8; P.R = { u: V(-0.12, -1 + 1.05 * k, 0.05 + 0.95 * k), f: V(-0.1, -0.9 + 1.0 * k, 0.2 + 0.85 * k), palm: V(1, 0, 0), curl: 85, trigger: 4, thumb: 45, shrug: 3 * k }; return P; },
     Wave: (t) => { const P = base(), up = sm(t / 0.35); P.R = { fwd: 6 + 55 * up, out: 13 + 60 * up, ffwd: 24 + 150 * up, fout: 9 + (8 + 16 * sin(t * 5.7)) * up, palm: up > 0.3 ? V(0, 0, 1) : side(-1), curl: 78 - 73 * up, thumb: 40 - 30 * up, shrug: 4 * up }; P.headPitch = -8; return P; },
@@ -1393,10 +1394,12 @@ function skLoad() {
     skInitCrew(); skSpawnObjs(); }, () => {});
 }
 // ---- his convoy: a white gold-trim limo up front and nine black SUVs, plus his own guards ----
-const skConeM = new THREE.MeshBasicMaterial({ color: 0xfff0cc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }), skLampM = new THREE.MeshBasicMaterial({ color: 0xfffbe8, toneMapped: false });
+const skPoolTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, 'rgba(255,244,214,0.95)'); gr.addColorStop(0.35, 'rgba(255,236,190,0.45)'); gr.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 128);
+  const t = new THREE.CanvasTexture(c); const m = g.getImageData(0, 0, 64, 128); for (let y = 0; y < 128; y++) for (let x = 0; x < 64; x++) { const k = 1 - Math.abs(x - 31.5) / 32, a = m.data[(y * 64 + x) * 4 + 3] * Math.pow(Math.max(0, k), 0.8); m.data[(y * 64 + x) * 4 + 3] = a; } g.putImageData(m, 0, 0); t.needsUpdate = true; return t; })();
+const skConeM = new THREE.MeshBasicMaterial({ map: skPoolTex, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), skLampM = new THREE.MeshBasicMaterial({ color: 0xfffbe8, toneMapped: false });
 function skHeadlights(c, fz) {
-  for (const sx of [-0.72, 0.72]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), skLampM); l.position.set(sx, 0.68, fz); c.car.add(l);
-    const g = new THREE.ConeGeometry(2.1, 15, 20, 1, true); g.translate(0, -7.5, 0); g.rotateX(-Math.PI / 2); const cone = new THREE.Mesh(g, skConeM); cone.position.set(sx, 0.66, fz); cone.renderOrder = 5; cone.frustumCulled = false; c.car.add(cone); }
+  for (const sx of [-0.72, 0.72]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), skLampM); l.position.set(sx, 0.68, fz); c.car.add(l); }
+  const g = new THREE.PlaneGeometry(3.4, 9); g.rotateX(-Math.PI / 2); const pool = new THREE.Mesh(g, skConeM); pool.position.set(0, 0.05, fz + 5.2); pool.renderOrder = 5; pool.frustumCulled = false; c.car.add(pool);
 }
 function skInitCrew() {
   for (let i = 0; i < 10; i++) { const c = i === 0 ? makeNpcCar(0xf2f0ea, 'limo', 'SREEKU 1', false, goldM, true) : makeNpcCar(0x0b0b0d, 'suv', 'SK 0' + i, false, goldM); c.half = i === 0 ? 2.6 : 1.5; c.heading = Math.PI / 2; c.speed = 0;
@@ -1430,47 +1433,47 @@ function skConvoyTick(dt) {
     const stop = skStop(i), left = stop - c.s, want = left > 0.05 ? Math.min(11, Math.max(1.2, left * 0.9)) : 0; c.speed += (want - c.speed) * Math.min(1, dt * (want < c.speed ? 4 : 1.5));
     c.s = Math.min(stop, c.s + c.speed * dt); c.car.position.set(c.s, 0, SKROAD.z); c.car.rotation.y = Math.PI / 2; for (const w of c.wheels) w.spin.rotation.x += c.speed * dt / 0.39; skCarSyncCols(c);
     if (stop - c.s < 0.06 && c.speed < 0.3) { c.go = 2; c.speed = 0; } });
-  if (SK.mode === 'convoy' && SK.cars[0].go === 2 && !SK.out) { SK.out = true; const L = SK.cars[0].car.position; skPlace(L.x - 0.6, L.z + 1.6, 0, 'Walk'); SK.walkTo = new THREE.Vector3(L.x + 3, 0, L.z + 9); blip(520, 390);
-    skGuardsAt([[skStop(1), SKROAD.z + 2.2, 0.3], [skStop(2), SKROAD.z + 2.2, -0.2], [skStop(3), SKROAD.z + 2.2, 0.1], [skStop(4), SKROAD.z + 2.2, 0], [L.x + 1.2, L.z + 7.5, 0], [L.x + 4.8, L.z + 7.5, 0]]); }
+  if (SK.mode === 'convoy' && SK.cars[0].go === 2 && !SK.out) { SK.out = true; blip(520, 390); }
   return allIn;
 }
 // cinematic camera for the convoy (gameplay camera comes back afterwards)
 function skCineCam() {
-  const C = SK.cine, L = SK.cars[0].car.position, u = C.t, sp = SK.obj.position; let pos, look, cap = '';
-  if (SK.out && C.to === undefined) C.to = u;                       // the limo has stopped
-  if (SK.out && !SK.walkTo && C.tf === undefined) { C.tf = u; skThump(); }   // he has arrived: reveal the face
-  if (C.tf !== undefined) {                                           // D: slow push-in to his face, light fades up
-    const k = clamp((u - C.tf) / 4.5, 0, 1), e = k * k * (3 - 2 * k);
-    pos = new THREE.Vector3(sp.x + 0.35 - 0.1 * e, 1.5 + 0.12 * e, sp.z + 3.6 - 2.1 * e); look = new THREE.Vector3(sp.x, 1.6, sp.z); cap = 'SREEKU BHAI';
-  } else if (C.to !== undefined) {                                    // C: he steps out of the dark and walks at the camera
-    const k = clamp((u - C.to) / 3.0, 0, 1);
-    if (SK.walkTo) { pos = new THREE.Vector3(SK.walkTo.x + 1.2, 0.45, SK.walkTo.z + 5.4 - 0.6 * k); look = new THREE.Vector3(sp.x, 1.35, sp.z); } else { pos = new THREE.Vector3(sp.x + 0.35, 1.5, sp.z + 3.6); look = new THREE.Vector3(sp.x, 1.6, sp.z); }
-    cap = '';
-  } else if (u < 6) {                                                 // A: low in the dark, headlights coming down the road
-    const k = u / 6; pos = new THREE.Vector3(SKROAD.x1 + 16 - 2.5 * k, 0.55, SKROAD.z + 3.2); look = new THREE.Vector3(SKROAD.x1 - 90, 1.0, SKROAD.z); cap = 'He is coming…';
-  } else {                                                            // B: low side pan, the cars rolling past
-    const k = clamp((u - 6) / 6, 0, 1); pos = new THREE.Vector3(SKROAD.x1 - 6 - 5 * k, 0.7, SKROAD.z + 7.5); look = new THREE.Vector3(L.x - 4, 1.0, L.z); cap = '10 cars. One boss.';
-  }
+  const C = SK.cine, L = SK.cars[0].car.position, u = C.t, sp = SK.obj.position, D = DEN; let pos, look, cap = '';
+  if (SK.out && C.to === undefined) C.to = u;                                     // the limo has stopped at the mansion
+  if (C.to !== undefined && !C.den && u - C.to > 1.8) skToDen(false);             // cut inside the mansion
+  if (C.tden !== undefined) {                                                     // inside: dark hall, then the light finds his face
+    if (C.tf === undefined && u - C.tden > 2.2) { C.tf = u; skThump(); }
+    if (C.tf !== undefined) { const k = clamp((u - C.tf) / 4.5, 0, 1), e = k * k * (3 - 2 * k); pos = new THREE.Vector3(sp.x + 0.35 - 0.1 * e, 1.5 + 0.12 * e, sp.z + 3.6 - 2.1 * e); look = new THREE.Vector3(sp.x, 1.6, sp.z); cap = 'SREEKU BHAI'; }
+    else { const k = clamp((u - C.tden) / 2.2, 0, 1); pos = new THREE.Vector3(D.x + 0.5 - 0.3 * k, 1.35, D.z + 4.6 - 0.5 * k); look = new THREE.Vector3(D.x, 1.5, D.z - 3.4); cap = ''; }
+  } else if (C.to !== undefined) { pos = new THREE.Vector3(SKROAD.x1 - 11, 0.7, SKROAD.z + 7.5); look = new THREE.Vector3(L.x - 4, 1.0, L.z); cap = 'Sreeku Bhai has arrived'; }
+  else if (u < 6) { const k = u / 6; pos = new THREE.Vector3(SKROAD.x1 + 16 - 2.5 * k, 0.55, SKROAD.z + 3.2); look = new THREE.Vector3(SKROAD.x1 - 90, 1.0, SKROAD.z); cap = 'He is coming…'; }
+  else { const k = clamp((u - 6) / 6, 0, 1); pos = new THREE.Vector3(SKROAD.x1 - 6 - 5 * k, 0.7, SKROAD.z + 7.5); look = new THREE.Vector3(L.x - 4, 1.0, L.z); cap = '10 cars. One boss.'; }
   camera.position.copy(pos); camera.lookAt(look); if ($('#cineCap').textContent !== cap) $('#cineCap').textContent = cap;
+}
+// the meeting happens inside his mansion: fade to black, he is already standing in the dark hall
+function skToDen(skip) {
+  const C = SK.cine; if (!C || C.den || trans || busy) return; C.den = 1;
+  teleport('den', DEN.x, 0, DEN.z + 5.2, Math.PI, () => { SK.mode = 'home'; SK.where = 'den'; SK.out = true; SK.walkTo = null; skPlace(DEN.x, DEN.z - 3.4, 0, 'Villain');
+    skGuardsAt([[DEN.x - 2.4, DEN.z - 3.8, 0], [DEN.x + 2.4, DEN.z - 3.8, 0], [ISL2.x - 39.5, ISL2.z - 31, 0], [ISL2.x - 32.5, ISL2.z - 31, 0]]); if (SK.cine) { SK.cine.tden = SK.cine.t; if (skip) SK.cine.tf = SK.cine.t - 99; } });
 }
 // low sub thump when his face is revealed
 function skThump() { if (!ac) return; try { [0, 0.34].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(90, ac.currentTime + d); o.frequency.exponentialRampToValueAtTime(34, ac.currentTime + d + 0.5); g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(i ? 0.5 : 0.8, ac.currentTime + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d + 1.1); o.connect(g).connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 1.2); }); } catch (e) {} }
 // the dark mood: dusk lighting, fog, headlight beams, spotlight on his face. Called right before rendering.
 const skSky0 = sunDir.clone(), skFog0 = new THREE.Color();
 function skDarkApply() {
-  const dk = SK.dk || 0; if (dk < 0.002) { if (SK.dkOn) { SK.dkOn = false; U.sunPosition.value.copy(sunDir); renderer.toneMappingExposure = 0.62; scene.fog.color.set(0xa9c0d8); skConeM.opacity = 0; if (SK.spot) SK.spot.intensity = 0; if (SK.rim) SK.rim.intensity = 0; } return; }
+  const dk = SK.dk || 0; if (dk < 0.002) { if (SK.dkOn) { SK.dkOn = false; $('#skdark').style.opacity = 0; U.sunPosition.value.copy(sunDir); renderer.toneMappingExposure = 0.62; scene.fog.color.set(0xa9c0d8); skConeM.opacity = 0; if (SK.spot) SK.spot.intensity = 0; if (SK.rim) SK.rim.intensity = 0; } return; }
   if (!SK.dkOn) { SK.dkOn = true; }
   U.sunPosition.value.set(sunDir.x, -0.09 * dk + sunDir.y * (1 - dk), sunDir.z).normalize();
-  renderer.toneMappingExposure = 0.62 - 0.3 * dk; sun.intensity *= 1 - 0.9 * dk; hemi.intensity = hemi.intensity * (1 - dk) + 0.2 * dk; hemi.color.lerp(skFog0.set(0x6f86c8), dk);
+  const den = inside === 'den'; renderer.toneMappingExposure = 0.62 - (den ? 0.4 : 0.3) * dk; sun.intensity *= 1 - (den ? 0.98 : 0.9) * dk; hemi.intensity = hemi.intensity * (1 - dk) + (den ? 0.05 : 0.2) * dk; hemi.color.lerp(skFog0.set(0x6f86c8), dk);
   scene.fog.color.set(0xa9c0d8).lerp(skFog0.set(0x070a12), dk); scene.fog.near = scene.fog.near * (1 - dk) + 12 * dk; scene.fog.far = scene.fog.far * (1 - dk) + 150 * dk;
-  skConeM.opacity = 0.085 * dk; const C = SK.cine, f = C && C.tf !== undefined ? clamp((C.t - C.tf) / 1.6, 0, 1) : 0, sp = SK.obj.position;
-  SK.spot.position.set(sp.x + 1.1, 4.4, sp.z + 2.4); SK.spot.target.position.set(sp.x, 1.5, sp.z); SK.spot.target.updateMatrixWorld(); SK.spot.intensity = 70 * f * f;
-  SK.rim.position.set(sp.x - 0.4, 2.3, sp.z - 1.6); SK.rim.intensity = 18 * f;
+  skConeM.opacity = 0.55 * dk; const C0 = SK.cine; $('#skdark').style.opacity = C0 && inside === 'den' ? (C0.tf === undefined ? 1 : 0.55 + 0.45 * (1 - clamp((C0.t - C0.tf) / 2.2, 0, 1))) : 0; const C = SK.cine, f = C && C.tf !== undefined ? clamp((C.t - C.tf) / 1.6, 0, 1) : 0, sp = SK.obj.position;
+  SK.spot.position.set(sp.x + 1.1, 4.4, sp.z + 2.4); SK.spot.target.position.set(sp.x, 1.5, sp.z); SK.spot.target.updateMatrixWorld(); SK.spot.intensity = 85 * f * f;
+  SK.rim.position.set(sp.x - 0.4, 2.3, sp.z - 1.6); SK.rim.intensity = 7 * f;
 }
 function skCineEnd(quiet) { if (!SK.cine) return; SK.cine = null; document.documentElement.classList.remove('cine'); if (quiet) return; camReset = true; controls.target.set(player.position.x, player.position.y + 1.3, player.position.z); camera.position.set(player.position.x - 3, player.position.y + 3, player.position.z - 5);
   for (const [i, c] of SK.cars.entries()) if (c.go !== 2) { c.go = 2; c.s = skStop(i); c.car.visible = true; c.car.position.set(c.s, 0, SKROAD.z); skCarSyncCols(c); } if (SK.mode === 'convoy') { skConvoyTick(0); if (SK.walkTo) { SK.obj.position.copy(SK.walkTo); SK.walkTo = null; SK.act = 'Villain'; SK.t = 0; } }
   hint('Sreeku Bhai is here. Walk up and talk to him'); }
-$('#cineSkip').addEventListener('click', () => { if (SK.cine && SK.cine.t > 0.5) skCineEnd(); });
+$('#cineSkip').addEventListener('click', () => { if (SK.cine && SK.cine.t > 0.5) { if (SK.cine.den) skCineEnd(); else skToDen(true); } });
 // per frame
 function skTick(dt) {
   if (!SK.obj) return;
@@ -1478,7 +1481,7 @@ function skTick(dt) {
   if (SK.where && !onIsl && !inDen && !SK.cine) { skHideAll(); return; }
   if (!SK.where) return;
   if (SK.mode === 'convoy') skConvoyTick(dt);
-  if (SK.cine) { SK.cine.t += dt; if (SK.cine.t > 34 || (SK.cine.tf !== undefined && SK.cine.t - SK.cine.tf > 6)) skCineEnd(); }
+  if (SK.cine) { SK.cine.t += dt; if (SK.cine.t > 70 || (SK.cine.tf !== undefined && SK.cine.t - SK.cine.tf > 6)) skCineEnd(); else if (SK.cine.t > 45 && !SK.cine.den) skToDen(true); }
   SK.dk += ((SK.cine ? 1 : 0) - SK.dk) * Math.min(1, dt * (SK.cine ? 1.6 : 0.9));
   // walking from the limo to the forecourt
   if (SK.walkTo) { const p = SK.obj.position, dx = SK.walkTo.x - p.x, dz = SK.walkTo.z - p.z, d = Math.hypot(dx, dz); if (d < 0.08) { SK.walkTo = null; SK.act = 'Villain'; SK.t = 0; } else { const st = Math.min(d, 1.5 * dt); p.x += dx / d * st; p.z += dz / d * st; SK.obj.rotation.y = lerpA(SK.obj.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6)); SK.act = 'Walk'; } }
