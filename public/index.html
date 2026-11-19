@@ -1458,7 +1458,7 @@ function skCineCam() {
   } else {                                                                        // B: side view, the cars roll past and the limo pulls up
     pos = new THREE.Vector3(R.x1 - 17, 1.0, R.z + 11); look = new THREE.Vector3(Math.min(L.x, R.x1 - 12) - 2, 0.9, L.z); cap = '10 cars. One boss.';
   }
-  camera.position.copy(pos); camera.lookAt(look); if ($('#cineCap').textContent !== cap) $('#cineCap').textContent = cap;
+  camera.position.copy(pos); camera.lookAt(look); SK.camPos = pos.clone(); if ($('#cineCap').textContent !== cap) $('#cineCap').textContent = cap;
 }
 function skSetDen() { SK.mode = 'home'; SK.where = 'den'; SK.out = true; SK.walkTo = null; skParkAll(true); skPlace(DEN.x, DEN.z - 3.4, 0, 'Villain');
   skGuardsAt([[DEN.x - 2.4, DEN.z - 3.8, 0], [DEN.x + 2.4, DEN.z - 3.8, 0], [ISL2.x - 39.5, ISL2.z - 31, 0], [ISL2.x - 32.5, ISL2.z - 31, 0]]); }
@@ -1499,7 +1499,7 @@ function skTick(dt) {
   if (SK.walkTo) { const p = SK.obj.position, dx = SK.walkTo.x - p.x, dz = SK.walkTo.z - p.z, d = Math.hypot(dx, dz); if (d < 0.08) { SK.walkTo = null; SK.act = 'Villain'; SK.t = 0; } else { const st = Math.min(d, (SK.cine ? 1.9 : 1.5) * dt); p.x += dx / d * st; p.z += dz / d * st; SK.obj.rotation.y = lerpA(SK.obj.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6)); SK.act = 'Walk'; } }
   // face Sherubhai when he comes close, otherwise hold the pose
   const pp = player.position, sp = SK.obj.position, d = Math.hypot(pp.x - sp.x, pp.z - sp.z), here = (SK.where === 'den') === inDen;
-  SK.obj.visible = here && SK.shown; if (!SK.walkTo && here && (d < 14 || SK.cine) && !(SK.cine && SK.cine.tw !== undefined)) { const ft = SK.cine ? camera.position : pp; SK.obj.rotation.y = lerpA(SK.obj.rotation.y, Math.atan2(ft.x - sp.x, ft.z - sp.z), Math.min(1, dt * 2.5)); }
+  SK.obj.visible = here && SK.shown; if (!SK.walkTo && here && (d < 14 || SK.cine) && !(SK.cine && SK.cine.tw !== undefined)) { const ft = SK.cine && SK.camPos ? SK.camPos : pp; SK.obj.rotation.y = lerpA(SK.obj.rotation.y, Math.atan2(ft.x - sp.x, ft.z - sp.z), Math.min(1, dt * 2.5)); }
   if (SK.talking && SK.act !== 'Talk' && SK.act !== 'Point') { SK.act = 'Talk'; SK.t = 0; } if (!SK.talking && (SK.act === 'Talk' || SK.act === 'Point')) { SK.act = 'Villain'; SK.t = 0; }
   SK.t += dt; if (here) SK.apply(SK.ACT[SK.act](SK.t));
   SK.tag.visible = SK.ring.visible = here && !SK.cine && !SK.walkTo && !SK.talking; if (d < 4.5) SK.tag.visible = false; SK.tag.position.set(sp.x, 2.45, sp.z); SK.ring.position.set(sp.x + Math.sin(SK.obj.rotation.y) * 1.6, 0.02, sp.z + Math.cos(SK.obj.rotation.y) * 1.6); SK.ring.userData.ring.scale.setScalar(1 + 0.06 * Math.sin(performance.now() / 330));
