@@ -1451,10 +1451,11 @@ function skCineCam() {
   camera.position.copy(pos); camera.lookAt(look); if ($('#cineCap').textContent !== cap) $('#cineCap').textContent = cap;
 }
 // the meeting happens inside his mansion: fade to black, he is already standing in the dark hall
+function skSetDen() { SK.mode = 'home'; SK.where = 'den'; SK.out = true; SK.walkTo = null; skParkAll(true); skPlace(DEN.x, DEN.z - 3.4, 0, 'Villain');
+  skGuardsAt([[DEN.x - 2.4, DEN.z - 3.8, 0], [DEN.x + 2.4, DEN.z - 3.8, 0], [ISL2.x - 39.5, ISL2.z - 31, 0], [ISL2.x - 32.5, ISL2.z - 31, 0]]); }
 function skToDen(skip) {
   const C = SK.cine; if (!C || C.den || trans || busy) return; C.den = 1;
-  teleport('den', DEN.x, 0, DEN.z + 5.2, Math.PI, () => { SK.mode = 'home'; SK.where = 'den'; SK.out = true; SK.walkTo = null; skPlace(DEN.x, DEN.z - 3.4, 0, 'Villain');
-    skGuardsAt([[DEN.x - 2.4, DEN.z - 3.8, 0], [DEN.x + 2.4, DEN.z - 3.8, 0], [ISL2.x - 39.5, ISL2.z - 31, 0], [ISL2.x - 32.5, ISL2.z - 31, 0]]); if (SK.cine) { SK.cine.tden = SK.cine.t; if (skip) SK.cine.tf = SK.cine.t - 99; } });
+  teleport('den', DEN.x, 0, DEN.z + 5.2, Math.PI, () => { skSetDen(); if (SK.cine) { SK.cine.tden = SK.cine.t; if (skip) SK.cine.tf = SK.cine.t - 99; } });
 }
 // low sub thump when his face is revealed
 function skThump() { if (!ac) return; try { [0, 0.34].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(90, ac.currentTime + d); o.frequency.exponentialRampToValueAtTime(34, ac.currentTime + d + 0.5); g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(i ? 0.5 : 0.8, ac.currentTime + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d + 1.1); o.connect(g).connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 1.2); }); } catch (e) {} }
@@ -1478,6 +1479,7 @@ $('#cineSkip').addEventListener('click', () => { if (SK.cine && SK.cine.t > 0.5)
 function skTick(dt) {
   if (!SK.obj) return;
   const onIsl = !inside && Math.hypot(player.position.x - ISL2.x, player.position.z - ISL2.z) < 300, inDen = inside === 'den';
+  if (inDen && SK.where !== 'den' && !SK.cine) skSetDen();   // he is always waiting inside his mansion
   if (SK.where && !onIsl && !inDen && !SK.cine) { skHideAll(); return; }
   if (!SK.where) return;
   if (SK.mode === 'convoy') skConvoyTick(dt);
