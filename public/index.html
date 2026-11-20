@@ -1677,7 +1677,7 @@ function tick() {
 
     // ---- game logic ----
     const P = playerPos(); aucTick(dt); guardTick(dt); convoyTick(dt);
-    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt); if (frame % 15 === 0) skRouteUpdate(P, skT && skT.tgt); skRouteTick(performance.now() / 1000);
+    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt); if (frame % 15 === 0) skRouteUpdate(P, (skT && skT.tgt) || (!skT && !S.skVisits && !inside ? { x: DESKSK.x, z: DESKSK.z } : null)); skRouteTick(performance.now() / 1000);
     if (inside === 'house' && !busy && player.position.z < HOUSE.z - 7.0 && Math.abs(player.position.x - HOUSE.x) < 2) teleport('up', UP.x + 5, 0, UP.z + 3.4, Math.PI);
     for (let i = goons.length - 1; i >= 0; i--) { const g = goons[i]; if (inside) continue; g.mx.update(dt);
       if (g.down) { g.down += dt; const k = Math.min(1, g.down * 3.5); g.obj.rotation.x = -k * 1.5; g.obj.position.y = g.gy + k * 0.12; if (g.down > 4) { scene.remove(g.obj); goons.splice(i, 1); } continue; }
@@ -1687,7 +1687,7 @@ function tick() {
       g.gy = onBlock(g.obj.position.x, g.obj.position.z) ? 0.15 : 0; g.obj.position.y = g.gy; }
     // objective: nearest thing still to buy
     let near = null, nd = 1e9; for (const p of PROPS) if (!p.owned) { const d = Math.hypot(P.x - p.door.x, P.z - p.door.z); if (d < nd) { nd = d; near = p; } }
-    if (frame % 10 === 0) $('#objtxt').textContent = inside ? ({ house: 'Home sweet home', up: 'Master bedroom', lobby: 'Crown Hotel lobby', suite: 'Royal suite', villa: 'Island villa', hall: 'Sher Auction House', den: "Sreeku Bhai's den" })[inside] : skT ? skT.txt : goons.some((g) => !g.down) ? 'Goons are after you. Use the gun' : near ? `Auction: ${near.name} · ${Math.round(nd)} m` : 'You own everything';
+    if (frame % 10 === 0) $('#objtxt').textContent = inside ? ({ house: 'Home sweet home', up: 'Master bedroom', lobby: 'Crown Hotel lobby', suite: 'Royal suite', villa: 'Island villa', hall: 'Sher Auction House', den: "Sreeku Bhai's den" })[inside] : skT ? skT.txt : goons.some((g) => !g.down) ? 'Goons are after you. Use the gun' : (!S.skVisits && Math.abs(playerPos().x) < 260 && Math.abs(playerPos().z) < 260) ? `Fly to Sreeku Island: red pad at Sher Air · ${Math.round(Math.hypot(playerPos().x - DESKSK.x, playerPos().z - DESKSK.z))} m` : near ? `Auction: ${near.name} · ${Math.round(nd)} m` : 'You own everything';
     const aimAt = skT && skT.tgt ? skT.tgt : near ? near.door : null; if (aimAt) { const cd = camera.getWorldDirection(camDir), vx = aimAt.x - P.x, vz = aimAt.z - P.z; $('#arrow i').style.transform = `rotate(${Math.atan2(vx * -cd.z + vz * cd.x, vx * cd.x + vz * cd.z)}rad)`; }
     // contextual action button
     let kind = null, prop = null, nv = null, spot = null;
