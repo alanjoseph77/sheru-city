@@ -113,6 +113,8 @@ html.fake #auc { justify-content:flex-end; align-items:center; }html.fake #auc .
   #rotate button { border:none; border-radius:26px; padding:13px 28px; font-size:15px; font-weight:800; cursor:pointer; }
   #rotSide { background:linear-gradient(#f5d77a,#d9a62e); color:#2a1f05; box-shadow:0 4px 0 #8a6a14; margin-top:8px; }
   #rotKeep { background:transparent; color:#fff; opacity:.7; font-size:13px !important; padding:8px 16px !important; }
+  #fs { position:fixed; right:calc(10px + var(--sr, 0px)); top:calc(100px + var(--st, 0px)); z-index:9; width:40px; height:40px; font-size:22px; line-height:1; background:#000a; color:#f5d77a; border:1px solid #f5d77a88; border-radius:10px; padding:0; }
+  html.cine #fs, body.ad #fs { display:none; }
   #reset { position:fixed; left:10px; top:136px; font-size:10px; background:#0006; color:#fff; border:none; border-radius:8px; padding:3px 7px; }
 </style>
 <script type="importmap">
@@ -140,7 +142,7 @@ html.fake #auc { justify-content:flex-end; align-items:center; }html.fake #auc .
   <div class="row">Goons dropped <b id="goons">0</b></div>
   <div id="rank">Richest man in the city</div>
 </div>
-<button id="reset">Reset save</button>
+<button id="reset">Reset save</button><button id="fs" aria-label="Full screen">⛶</button>
 <canvas id="map" width="224" height="224"></canvas>
 <div id="obj"><div id="arrow"><i></i></div><span id="objtxt">…</span></div>
 <div id="cross"></div>
@@ -1112,7 +1114,7 @@ if (!MOBILE) { const tag = { act: 'F', valet: 'V', Jump: 'Space', Wave: 'Q', Dan
   for (const b of document.querySelectorAll('#btns button')) { const k = tag[b.dataset.a || b.id]; if (k) { b.style.position = 'relative'; b.insertAdjacentHTML('beforeend', '<kbd>' + k + '</kbd>'); } }
   $('#bid1').insertAdjacentHTML('beforeend', ' <kbd>1</kbd>'); $('#bid2').insertAdjacentHTML('beforeend', ' <kbd>2</kbd>'); $('#aucQuit').insertAdjacentHTML('beforeend', ' <kbd>3</kbd>');
   document.body.insertAdjacentHTML('beforeend', '<div id="keyhelp"><kbd>K</kbd> controls</div>'); }
-$('#play').addEventListener('click', () => { if (!MOBILE) { $('#keys').classList.add('show'); setTimeout(() => $('#keys').classList.remove('show'), 9000); } audioInit(); camReset = true; started = true; if (MOBILE) goLandscape(); else orientCheck(); $('#start').style.opacity = 0; setTimeout(() => $('#start').remove(), 500); if (!S.skVisits) setTimeout(() => hint('New: Sreeku Bhai invites you to Sreeku Island. Fly from the Sher Air terminal'), 6000); });
+$('#play').addEventListener('click', () => { if (S.pos && S.pos[0] > -400) { player.position.set(S.pos[0], 0.15, S.pos[1]); player.rotation.y = S.pos[2] || 0; } if (!MOBILE) { $('#keys').classList.add('show'); setTimeout(() => $('#keys').classList.remove('show'), 9000); } audioInit(); camReset = true; started = true; if (MOBILE) goLandscape(); else orientCheck(); $('#start').style.opacity = 0; setTimeout(() => $('#start').remove(), 500); if (!S.skVisits) setTimeout(() => hint('New: Sreeku Bhai invites you to Sreeku Island. Fly from the Sher Air terminal'), 6000); });
 
 // ---- gun ----
 function setArmed(on) { if (!player) return; armed = on; PISTOL.visible = on; $('#cross').style.display = on ? 'block' : 'none'; $('#fire').style.visibility = on ? 'visible' : 'hidden'; document.querySelector('[data-a=gun]').classList.toggle('on', on);
@@ -1535,7 +1537,7 @@ function skTaskTick(dt) {
   return { txt, tgt };
 }
 // ---- the route to the task target: follows the city streets, drawn on the map and as gold dots on the road ----
-let skRoute = [];
+let skRoute = [], skPosT = 0;
 const skDots = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.36, 0.36, 0.06, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f }), 170); skDots.frustumCulled = false; skDots.visible = false; scene.add(skDots);
 function skMakeRoute(a, b) {
   const R = roadC, E = 94, snap = (p) => { let best = null; for (const r of R) { const c1 = { x: r, z: clamp(p.z, -E, E), ax: 'x', r }, c2 = { x: clamp(p.x, -E, E), z: r, ax: 'z', r }; for (const c of [c1, c2]) { const d = Math.hypot(p.x - c.x, p.z - c.z); if (!best || d < best.d) best = { ...c, d }; } } return best; };
@@ -1677,7 +1679,7 @@ function tick() {
 
     // ---- game logic ----
     const P = playerPos(); aucTick(dt); guardTick(dt); convoyTick(dt);
-    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt); if (frame % 15 === 0) skRouteUpdate(P, (skT && skT.tgt) || (!skT && !S.skVisits && !inside ? { x: DESKSK.x, z: DESKSK.z } : null)); skRouteTick(performance.now() / 1000);
+    hallTick(dt); lobbyTick(dt); skTick(dt); const skT = skTaskTick(dt); if (frame % 15 === 0) skRouteUpdate(P, (skT && skT.tgt) || (!skT && !S.skVisits && !inside ? { x: DESKSK.x, z: DESKSK.z } : null)); skRouteTick(performance.now() / 1000); if (performance.now() - skPosT > 2000 && !document.getElementById('start') && !inside && !cut && !trans && !SK.cine) { skPosT = performance.now(); const q = playerPos(); if (q.x > -400 && Math.abs(q.z) < 1000) { S.pos = [+q.x.toFixed(1), +q.z.toFixed(1), +player.rotation.y.toFixed(2)]; save(); } }
     if (inside === 'house' && !busy && player.position.z < HOUSE.z - 7.0 && Math.abs(player.position.x - HOUSE.x) < 2) teleport('up', UP.x + 5, 0, UP.z + 3.4, Math.PI);
     for (let i = goons.length - 1; i >= 0; i--) { const g = goons[i]; if (inside) continue; g.mx.update(dt);
       if (g.down) { g.down += dt; const k = Math.min(1, g.down * 3.5); g.obj.rotation.x = -k * 1.5; g.obj.position.y = g.gy + k * 0.12; if (g.down > 4) { scene.remove(g.obj); goons.splice(i, 1); } continue; }
@@ -1727,6 +1729,9 @@ function orientCheck() { const need = started && MOBILE && !keepUpright && !isFa
 async function goLandscape() { try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) {}
   try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {} fitScreen(); setTimeout(fitScreen, 350); setTimeout(fitScreen, 900); }
 $('#rotSide').addEventListener('click', () => { document.documentElement.classList.add('fake'); document.documentElement.classList.remove('rotwait'); fitScreen(); });
+const fsEl = document.documentElement; if (!fsEl.requestFullscreen) $('#fs').style.display = 'none';
+$('#fs').addEventListener('click', async () => { try { if (document.fullscreenElement) { await document.exitFullscreen(); } else { await fsEl.requestFullscreen({ navigationUI: 'hide' }); try { if (MOBILE && screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {} } } catch (e) {} fitScreen(); setTimeout(fitScreen, 300); });
+addEventListener('fullscreenchange', () => { $('#fs').textContent = document.fullscreenElement ? '✕' : '⛶'; setTimeout(fitScreen, 150); });
 $('#rotKeep').addEventListener('click', () => { keepUpright = true; fitScreen(); });
 // sideways mode: turn screen touches into game coordinates for the camera drag and pinch
 for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) renderer.domElement.addEventListener(t, (e) => { if (!isFake() || !e.isTrusted) return; e.stopImmediatePropagation(); e.preventDefault(); const g = toGame(e.clientX, e.clientY);
